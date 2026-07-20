@@ -1,0 +1,21 @@
+[project]
+name = "pulse-backend"
+version = "0.1.0"
+description = "Backend architecture skeleton for Pulse."
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi",
+  "pydantic",
+  "python-multipart>=0.0.32",
+  "uvicorn",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".."]
+
