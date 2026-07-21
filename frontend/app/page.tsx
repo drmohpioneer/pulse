@@ -1527,7 +1527,15 @@ function DemoDrawer({
           <input
             value={transcriptText}
             onChange={(event) => setTranscriptText(event.target.value)}
-            className="min-h-12 rounded-2xl bg-[#05070B] px-4 font-medium text-[#F4EFE6] outline-none ring-1 ring-[#F4EFE6]/10 focus:ring-[#D8A536]/70"
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !isLoading) {
+                event.preventDefault();
+                void sendTranscript();
+              }
+            }}
+            aria-label="Say something the team would say out loud"
+            placeholder="rhythm is vf"
+            className="min-h-12 rounded-2xl bg-[#05070B] px-4 font-medium text-[#F4EFE6] outline-none ring-1 ring-[#F4EFE6]/10 placeholder:text-[#F4EFE6]/28 focus:ring-[#D8A536]/70"
           />
           <button
             type="button"

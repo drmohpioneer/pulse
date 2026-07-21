@@ -109,8 +109,9 @@ curl http://127.0.0.1:8000/api/demo
 
 ## Walk through it in two minutes
 
-1. **Feed the room a phrase.** In the transcript panel, enter something a real
-   team says out loud, in English or Egyptian Arabic:
+1. **Feed the room a phrase.** Open the **Demo** panel at the bottom of the
+   dashboard, then type into the transcript box and press Enter. Say something a
+   real team says out loud, in English or Egyptian Arabic:
    - `rhythm is vf`
    - `الريذم vf`
    - `give 1 mg epinephrine`
