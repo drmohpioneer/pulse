@@ -266,6 +266,27 @@ type ScenarioResponse = {
 
 const API_BASE = process.env.NEXT_PUBLIC_PULSE_API_BASE ?? "http://127.0.0.1:8000";
 
+// Browsers report an unreachable server with wording nobody can act on:
+// "Failed to fetch" in Chrome, "Load failed" in Safari. Say what is actually
+// wrong and what to type, for a reader who may never have run a server before.
+function describeError(err: unknown): string {
+  const raw = err instanceof Error ? err.message : "";
+  const looksOffline =
+    err instanceof TypeError ||
+    /failed to fetch|load failed|networkerror|fetch failed/i.test(raw);
+
+  if (!looksOffline) {
+    return raw || "Something went wrong inside Pulse.";
+  }
+  return (
+    `Pulse cannot reach its engine. Pulse runs as two programs: this screen, ` +
+    `and the engine that does the clinical thinking. The engine is not ` +
+    `answering at ${API_BASE}. Start it in a terminal with ` +
+    `"uv run --project backend uvicorn backend.api.main:app --port 8000". ` +
+    `This screen reconnects on its own once it is running.`
+  );
+}
+
 const demoActions: Array<{ action: DemoAction; label: string }> = [
   { action: "cpr_started", label: "CPR" },
   { action: "vf", label: "VF" },
@@ -363,7 +384,7 @@ export default function Page() {
       }
       setState(await response.json());
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown Pulse error.");
+      setError(describeError(err));
     }
   }
 
@@ -590,7 +611,7 @@ export default function Page() {
       }
       setAudioStatus(response.transcription_error);
     } catch (err) {
-      setAudioStatus(err instanceof Error ? err.message : "Unable to process audio chunk.");
+      setAudioStatus(describeError(err));
     }
   }
 
@@ -648,7 +669,7 @@ export default function Page() {
     try {
       await work();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown Pulse error.");
+      setError(describeError(err));
     } finally {
       setIsLoading(false);
     }

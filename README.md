@@ -225,9 +225,9 @@ implemented across Codex sessions, each one scoped to a single vertical slice
 with tests. `docs/decisions.md` records the engineering decisions and
 `docs/journal.md` records how the build actually went.
 
-Before release, the whole pipeline was exercised by an external simulation
-harness: **29 scripted resuscitation scenarios** (classic VF arrests, asystole
-and PEA arrests, intertangled VF→asystole→VF codes, ROSC and re-arrest, echo
+Before release, the whole pipeline was exercised by a simulation harness of
+**29 scripted resuscitation scenarios** (classic VF arrests, asystole and PEA
+arrests, intertangled VF→asystole→VF codes, ROSC and re-arrest, echo
 duplicates, room-chatter false-positive probes, order-then-completion loops,
 zero-touch hands-free runs) driven through the same code path the live
 microphone uses, plus replays of real recorded clinician speech through the
@@ -235,6 +235,19 @@ real ASR provider. Bugs that sweep surfaced — a phrase matcher that missed
 natural speech, silence segments hallucinating transcripts, echo duplicates
 inflating shock counts, amiodarone second-dose timing — were fixed by Codex
 and locked with regression tests.
+
+The sweep is in the repository, so you can run it yourself:
+
+```bash
+uv run --project backend python -m backend.simulation.sweep
+```
+
+Each scenario is written as the phrases a team actually says out loud, not as
+API calls, and is fed through the real normalization, evidence, fusion, and
+confirmation path. Phrases carry explicit timestamps, so a ten-minute code is
+swept in milliseconds while deduplication still sees the gaps it would see
+live. The scenarios also run inside `pytest`, so a change that breaks one fails
+the build. `backend/simulation/scenarios.py` states what each scenario proves.
 
 ---
 
