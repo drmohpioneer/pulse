@@ -167,21 +167,22 @@ Out of the box the microphone path runs against deterministic fake ASR, so you
 can exercise capture, upload, and storage without an account. To speak into it
 yourself and watch the board move, you need one speech-recognition key.
 
-**The free option, about two minutes:** create a key at
-[console.groq.com](https://console.groq.com) (Groq's Whisper tier is free), then
+**With an OpenAI key, about a minute:**
 
 ```bash
 cp backend/.env.example backend/.env
-echo "PULSE_ASR_PROVIDER=groq"     >> backend/.env
-echo "GROQ_API_KEY=your_key_here"  >> backend/.env
+echo "PULSE_ASR_PROVIDER=openai"     >> backend/.env
+echo "OPENAI_API_KEY=your_key_here"  >> backend/.env
 ```
 
 Restart the backend, open the **Live Audio** panel, press Start Listening, and
 say `rhythm is VF`. The panel names the provider it is actually using, so you
 can see at a glance whether you are on real ASR or the fake one.
 
-If you already pay for OpenAI or ElevenLabs, swap the two lines below instead.
-Nothing else changes.
+Prefer a different vendor, or want a free tier? Change one line.
+`PULSE_ASR_PROVIDER=groq` with a `GROQ_API_KEY` from
+[console.groq.com](https://console.groq.com) costs nothing, and
+`elevenlabs` works the same way. Nothing else in the project changes.
 
 ### Enabling real speech recognition
 
@@ -256,18 +257,36 @@ natural speech, silence segments hallucinating transcripts, echo duplicates
 inflating shock counts, amiodarone second-dose timing — were fixed by Codex
 and locked with regression tests.
 
-The sweep is in the repository, so you can run it yourself:
+The sweep is in the repository, so you can run it yourself, two ways.
+
+**Did anything break?** Instant and deterministic. Phrases carry simulated
+timestamps, so a ten-minute code is checked in milliseconds while
+deduplication still sees the gaps it would see live.
 
 ```bash
 uv run --project backend python -m backend.simulation.sweep
 ```
 
+**What does it actually look like?** Real time. Phrases arrive at the pace a
+team really speaks them, and `--app` pushes them into a running Pulse so the
+dashboard moves on screen while you watch.
+
+```bash
+uv run --project backend python -m backend.simulation.sweep --live --app
+uv run --project backend python -m backend.simulation.sweep --live --app --scenario hands_free_full_code
+uv run --project backend python -m backend.simulation.sweep --list
+```
+
+Watching a single arrest play out takes a few minutes, and the full set takes
+about an hour, which is the point: this is the tempo of a real code. `--speed`
+compresses it, with the honest caveat the tool prints, that squeezing the gaps
+can push a repeated shock inside the deduplication window and get it rejected,
+exactly as it would be if a real team said it that fast.
+
 Each scenario is written as the phrases a team actually says out loud, not as
 API calls, and is fed through the real normalization, evidence, fusion, and
-confirmation path. Phrases carry explicit timestamps, so a ten-minute code is
-swept in milliseconds while deduplication still sees the gaps it would see
-live. The scenarios also run inside `pytest`, so a change that breaks one fails
-the build. `backend/simulation/scenarios.py` states what each scenario proves.
+confirmation path. They also run inside `pytest`, so a change that breaks one
+fails the build. `backend/simulation/scenarios.py` states what each proves.
 
 ---
 
