@@ -1777,3 +1777,15 @@ def test_http_error_surfaces_vendor_status_and_body(tmp_path, monkeypatch: pytes
         )
 
     assert "429" in str(excinfo.value)
+
+
+def test_blank_transcript_is_a_client_error_not_a_server_crash() -> None:
+    """A blank phrase is the caller's mistake, so it must not surface as a 500."""
+    from fastapi import HTTPException
+
+    request = DemoTranscriptRequest(text="   ")
+
+    with pytest.raises(HTTPException) as excinfo:
+        routes.create_demo_transcript(request)
+
+    assert excinfo.value.status_code == 400

@@ -51,7 +51,10 @@ def create_demo_event(request: DemoEventRequest) -> DemoStateResponse:
 
 @router.post("/demo/transcripts", response_model=DemoTranscriptResponse)
 def create_demo_transcript(request: DemoTranscriptRequest) -> DemoTranscriptResponse:
-    return demo_session.process_transcript(request)
+    try:
+        return demo_session.process_transcript(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
 @router.post("/demo/live/start", response_model=LiveVoiceSessionResponse)
