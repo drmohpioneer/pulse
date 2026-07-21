@@ -6,13 +6,15 @@ Version: 1.0
 
 ## Current Phase
 
-Pulse v0.4
+Pulse v0.5 — submitted to OpenAI Build Week (July 2026).
 
 ---
 
 ## Current Milestone
 
-Pulse v0.4 multimodal voice-intelligence safety slice implemented.
+Live microphone capture, swappable multi-vendor ASR adapter (fake / OpenAI /
+Groq / ElevenLabs / any OpenAI-compatible endpoint), and the end-to-end demo
+shipped on top of the v0.4 multimodal voice-intelligence safety slice.
 
 ---
 

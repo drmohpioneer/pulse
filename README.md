@@ -10,6 +10,10 @@ and current.
 > for use on real patients.** Pulse is unvalidated software built for the OpenAI
 > Build Week challenge.
 
+**▶ Demo film (2:21):** https://youtu.be/Ou2HArr33Ag
+
+![Pulse tracking a shockable arrest — amiodarone surfaced before anyone asked](assets/dashboard-amiodarone-due.jpg)
+
 ---
 
 ## The problem
@@ -123,6 +127,8 @@ curl http://127.0.0.1:8000/api/demo
    available for 30 seconds. An order ("give 1 mg epinephrine") becomes a
    pending card instead, resolved when its completion is spoken ("epi is in"),
    or by tapping Confirm / Reject / Correct.
+
+   ![A spoken order waiting as a pending card until its completion closes the loop](assets/pending-order-confirmation.jpg)
 3. **Try the timers.** Say `cpr started` and wait: the 2-minute rhythm-check
    prompt surfaces on its own, epinephrine timing is tracked per ACLS, and
    after a shock the hands-off counter climbs and escalates until compressions

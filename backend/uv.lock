@@ -126,8 +126,8 @@ dependencies = [
     { name = "uvicorn" },
 ]
 
-[package.optional-dependencies]
-test = [
+[package.dev-dependencies]
+dev = [
     { name = "pytest" },
 ]
 
@@ -135,11 +135,12 @@ test = [
 requires-dist = [
     { name = "fastapi" },
     { name = "pydantic" },
-    { name = "pytest", marker = "extra == 'test'" },
     { name = "python-multipart", specifier = ">=0.0.32" },
     { name = "uvicorn" },
 ]
-provides-extras = ["test"]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest" }]
 
 [[package]]
 name = "pydantic"

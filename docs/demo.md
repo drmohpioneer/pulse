@@ -1,7 +1,7 @@
 # Pulse Hackathon Demo
 
-Version: 1.0
-Status: Draft
+Version: 1.1
+Status: Final — the demo film is at https://youtu.be/Ou2HArr33Ag
 
 ---
 

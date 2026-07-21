@@ -10,8 +10,8 @@ dependencies = [
   "uvicorn",
 ]
 
-[project.optional-dependencies]
-test = [
+[dependency-groups]
+dev = [
   "pytest",
 ]
 
