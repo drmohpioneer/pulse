@@ -181,10 +181,17 @@ Work in progress:
     event status.
 - Live transcription hardening:
   - Replace scripted polling with a provider-neutral streaming transport.
-  - Activate a real ASR provider only after credentials, storage, consent,
-    audit, and retention decisions are made.
-  - Add durable session/audit storage.
-  - Add real ASR/diarization adapter only after provider selection and validation.
+    Still outstanding, and now the top item: segment boundaries can split a
+    spoken phrase, which streaming removes.
+  - ~~Activate a real ASR provider~~ **Done.** Speech recognition is a
+    swappable vendor adapter (fake, OpenAI, Groq, ElevenLabs, or any
+    OpenAI-compatible endpoint) selected by one environment variable, and it
+    fails closed to fake ASR when a provider is missing or failing.
+  - Add durable session/audit storage. Still outstanding; the audit log is
+    local JSONL and session state is in memory.
+  - Add a real diarization adapter after provider selection and validation.
+    Still outstanding; diarization remains a contract with a deterministic
+    stand-in provider.
 
 Target pipeline:
 

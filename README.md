@@ -251,11 +251,18 @@ Before release, the whole pipeline was exercised by a simulation harness of
 arrests, intertangled VF→asystole→VF codes, ROSC and re-arrest, echo
 duplicates, room-chatter false-positive probes, order-then-completion loops,
 zero-touch hands-free runs) driven through the same code path the live
-microphone uses, plus replays of real recorded clinician speech through the
-real ASR provider. Bugs that sweep surfaced — a phrase matcher that missed
+microphone uses. Bugs that sweep surfaced — a phrase matcher that missed
 natural speech, silence segments hallucinating transcripts, echo duplicates
 inflating shock counts, amiodarone second-dose timing — were fixed by Codex
 and locked with regression tests.
+
+Separately, and by hand rather than in the automated sweep, a clinician
+(the author) spoke the same phrases into the live microphone path through a
+real ASR vendor. That is where the language-pinning problem surfaced: with
+automatic language detection, a four-second clip of English clinical speech
+was sometimes transcribed as Polish or Spanish. Those recordings are the
+author's own voice and are deliberately not committed. `docs/SMOKE_TEST.md`
+gives the manual steps so you can reproduce that check with your own voice.
 
 The sweep is in the repository, so you can run it yourself, two ways.
 

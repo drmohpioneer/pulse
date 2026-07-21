@@ -1,7 +1,7 @@
 # Pulse Roadmap
 
-Version: 1.0
-Status: Draft
+Version: 1.1
+Status: Current as of the Build Week submission
 
 ---
 
