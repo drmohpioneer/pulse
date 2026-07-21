@@ -80,7 +80,9 @@ acceptance, supersession, and undo is written to the audit log.
 offline speech recognition and runs end to end out of the box. This is the
 recommended way to evaluate it.
 
-Requirements: Python 3.12+ with [uv](https://docs.astral.sh/uv/), and Node 18+.
+Requirements: Python 3.12+ with [uv](https://docs.astral.sh/uv/), and Node 22+.
+Windows, macOS, and Linux are all fine; the commands below are identical on
+each, and nothing in the project shells out or assumes a POSIX path.
 
 **Terminal 1, backend:**
 
@@ -159,11 +161,29 @@ HTTPS. Chrome and Safari are both supported.
 With the default configuration this runs against fake ASR, so you can exercise
 the whole capture, upload, and storage path with no credentials.
 
-### Enabling real speech recognition
+### Using your own voice
+
+Out of the box the microphone path runs against deterministic fake ASR, so you
+can exercise capture, upload, and storage without an account. To speak into it
+yourself and watch the board move, you need one speech-recognition key.
+
+**The free option, about two minutes:** create a key at
+[console.groq.com](https://console.groq.com) (Groq's Whisper tier is free), then
 
 ```bash
 cp backend/.env.example backend/.env
+echo "PULSE_ASR_PROVIDER=groq"     >> backend/.env
+echo "GROQ_API_KEY=your_key_here"  >> backend/.env
 ```
+
+Restart the backend, open the **Live Audio** panel, press Start Listening, and
+say `rhythm is VF`. The panel names the provider it is actually using, so you
+can see at a glance whether you are on real ASR or the fake one.
+
+If you already pay for OpenAI or ElevenLabs, swap the two lines below instead.
+Nothing else changes.
+
+### Enabling real speech recognition
 
 Speech recognition is a swappable adapter, so pick whichever vendor you already
 pay for and set two lines:
