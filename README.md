@@ -158,12 +158,30 @@ the whole capture, upload, and storage path with no credentials.
 cp backend/.env.example backend/.env
 ```
 
-Then set:
+Speech recognition is a swappable adapter, so pick whichever vendor you already
+pay for and set two lines:
 
 ```
-PULSE_ASR_PROVIDER=openai
-OPENAI_API_KEY=sk-...
+PULSE_ASR_PROVIDER=groq          # fake | openai | groq | elevenlabs
+GROQ_API_KEY=gsk_...             # or OPENAI_API_KEY / ELEVENLABS_API_KEY
 ```
+
+| Provider | Key | Default model |
+|---|---|---|
+| `fake` | none | deterministic offline stub |
+| `openai` | `OPENAI_API_KEY` | `gpt-4o-transcribe` |
+| `groq` | `GROQ_API_KEY` | `whisper-large-v3-turbo` |
+| `elevenlabs` | `ELEVENLABS_API_KEY` | `scribe_v1` (supports `PULSE_ASR_DIARIZE`) |
+
+Vendors are declared as data in `backend/audio/asr.py`, and the two wire
+formats (OpenAI-compatible and ElevenLabs) are separate transports. Any other
+OpenAI-compatible endpoint therefore needs no code change at all, just
+`PULSE_ASR_PROVIDER=<any-name>` plus `PULSE_ASR_BASE_URL`, `PULSE_ASR_MODEL`,
+and `PULSE_ASR_API_KEY`.
+
+For a room that code-switches between Arabic and English, set
+`PULSE_ASR_LANGUAGE=auto`. Pinning a single language makes the model
+transliterate the other one into nonsense instead of transcribing it.
 
 Restart the backend. The Live Audio panel reports which provider is active.
 If the key is missing or the provider fails, Pulse **fails closed**: it falls

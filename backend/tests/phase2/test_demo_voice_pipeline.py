@@ -1620,3 +1620,160 @@ def test_compound_utterance_reversed_text_order_still_ends_active() -> None:
     state = session.current_state()
     assert state.shock_count == 1
     assert state.cpr_status == "Active"
+
+
+# --- Swappable transcription vendors ---------------------------------------
+
+
+def test_provider_name_follows_selected_vendor(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PULSE_ASR_PROVIDER", "groq")
+    monkeypatch.setenv("GROQ_API_KEY", "test-groq-key")
+    monkeypatch.delenv("PULSE_ASR_BASE_URL", raising=False)
+    monkeypatch.delenv("PULSE_ASR_MODEL", raising=False)
+    monkeypatch.delenv("PULSE_OPENAI_TRANSCRIPTION_MODEL", raising=False)
+    monkeypatch.delenv("PULSE_OPENAI_TRANSCRIPTION_URL", raising=False)
+
+    provider = build_transcription_provider()
+
+    assert provider.provider_name == "groq"
+    assert provider._model == "whisper-large-v3-turbo"
+    assert provider._base_url == "https://api.groq.com/openai/v1/audio/transcriptions"
+
+
+def test_unknown_vendor_works_as_custom_openai_compatible_endpoint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("PULSE_ASR_PROVIDER", "self-hosted")
+    monkeypatch.setenv("PULSE_ASR_BASE_URL", "https://asr.internal/v1/audio/transcriptions")
+    monkeypatch.setenv("PULSE_ASR_MODEL", "whisper-local")
+    monkeypatch.setenv("PULSE_ASR_API_KEY", "test-key")
+
+    provider = build_transcription_provider()
+
+    assert provider.provider_name == "self-hosted"
+    assert provider._base_url == "https://asr.internal/v1/audio/transcriptions"
+    assert provider._model == "whisper-local"
+
+
+def test_unknown_vendor_without_base_url_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PULSE_ASR_PROVIDER", "mystery")
+    monkeypatch.delenv("PULSE_ASR_BASE_URL", raising=False)
+
+    with pytest.raises(TranscriptionProviderConfigurationError):
+        build_transcription_provider()
+
+
+def test_elevenlabs_vendor_is_selectable(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PULSE_ASR_PROVIDER", "elevenlabs")
+    monkeypatch.setenv("ELEVENLABS_API_KEY", "test-eleven-key")
+
+    provider = build_transcription_provider()
+
+    assert provider.provider_name == "elevenlabs"
+    assert provider._model == "scribe_v1"
+
+
+def test_transport_sends_user_agent(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Groq's edge returns 403 error 1010 for the stdlib default User-Agent."""
+    captured: dict[str, object] = {}
+
+    class _Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return b'{"text":"Rhythm VF."}'
+
+    def fake_urlopen(request, timeout):
+        captured["headers"] = request.headers
+        return _Response()
+
+    monkeypatch.setattr(asr_module.urllib.request, "urlopen", fake_urlopen)
+    _openai_http_transport(
+        AudioTranscriptionRequest(
+            session_id="ua", sequence=1, audio_reference="chunk.webm", content_type="audio/webm"
+        ),
+        b"fake audio",
+        "chunk.webm",
+        "whisper-large-v3-turbo",
+        "https://example.test/audio/transcriptions",
+        "test-key",
+        7.5,
+        "en",
+        "vocab",
+    )
+
+    headers = captured["headers"]
+    assert headers["User-agent"] == asr_module.ASR_USER_AGENT
+
+
+def test_auto_language_omits_the_language_field(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A pinned language transliterates code-switched speech instead of transcribing it."""
+    captured: dict[str, object] = {}
+
+    class _Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return b'{"text":"Rhythm VF."}'
+
+    def fake_urlopen(request, timeout):
+        captured["body"] = request.data
+        return _Response()
+
+    monkeypatch.setattr(asr_module.urllib.request, "urlopen", fake_urlopen)
+    _openai_http_transport(
+        AudioTranscriptionRequest(
+            session_id="auto", sequence=1, audio_reference="chunk.webm", content_type="audio/webm"
+        ),
+        b"fake audio",
+        "chunk.webm",
+        "whisper-large-v3-turbo",
+        "https://example.test/audio/transcriptions",
+        "test-key",
+        7.5,
+        "",
+        "vocab",
+    )
+
+    assert b'name="language"' not in captured["body"]
+
+
+def test_auto_language_env_resolves_to_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PULSE_ASR_LANGUAGE", "auto")
+    assert asr_module._resolve_language() == ""
+    monkeypatch.setenv("PULSE_ASR_LANGUAGE", "ar")
+    assert asr_module._resolve_language() == "ar"
+    monkeypatch.delenv("PULSE_ASR_LANGUAGE", raising=False)
+    assert asr_module._resolve_language() == "en"
+
+
+def test_http_error_surfaces_vendor_status_and_body(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A rejected request used to collapse into an opaque 'request failed'."""
+    audio_path = tmp_path / "chunk.webm"
+    audio_path.write_bytes(b"fake audio bytes")
+
+    def transport(*args, **kwargs):
+        raise asr_module.urllib.error.HTTPError(
+            "https://example.test", 429, "Too Many Requests", {}, None
+        )
+
+    provider = OpenAITranscriptionProvider(api_key="test-key", transport=transport)
+    with pytest.raises(TranscriptionProviderRuntimeError) as excinfo:
+        provider.transcribe(
+            AudioTranscriptionRequest(
+                session_id="http-error",
+                sequence=1,
+                audio_reference=str(audio_path),
+                content_type="audio/webm",
+            )
+        )
+
+    assert "429" in str(excinfo.value)
